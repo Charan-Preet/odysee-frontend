@@ -329,6 +329,12 @@ $actions-z-index: 2;
   font-size: 1px; // To hide the alt text on firefox;
 }
 
+.channel-thumbnail__mini {
+  display: inline-block;
+  border-radius: 50%;
+  margin-right: var(--spacing-xxs);
+}
+
 .channel-thumbnail__default {
   width: 80%;
   height: 80%;

@@ -33,6 +33,7 @@ import {
   getAmountNeededToCenterVideo,
   getPossiblePlayerHeight,
 } from './helper-functions';
+import OptimizedImage from 'component/optimizedImage';
 
 // scss/init/vars.scss
 // --header-height
@@ -458,7 +459,12 @@ export default function FileRenderFloating(props: Props) {
               <div className="claim-preview__title" title={title || uri}>
                 <Button label={title || uri} navigate={navigateUrl} button="link" className="content__floating-link" />
               </div>
-
+              <OptimizedImage
+                className="channel-thumbnail__mini"
+                width="16"
+                quality="16"
+                src="https://thumbnails.odycdn.com/optimize/s:16:0/quality:85/plain/https://thumbnails.lbry.com/UCWGJ3y5mujy-CQP8Oq6HCPA"
+              />
               <UriIndicator link uri={uri} />
             </div>
           )}
