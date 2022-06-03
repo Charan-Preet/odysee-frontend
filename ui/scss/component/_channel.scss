@@ -121,8 +121,6 @@ $actions-z-index: 2;
     opacity: 1;
   }
 
-  .MuiAutocomplete-root {
-  }
   .MuiOutlinedInput-root {
     background-color: var(--color-input-bg);
 
@@ -331,8 +329,11 @@ $actions-z-index: 2;
 
 .channel-thumbnail__mini {
   display: inline-block;
+  width: var(--font-body);
+  height: var(--font-body);
   border-radius: 50%;
   margin-right: var(--spacing-xxs);
+  margin-bottom: -2px;
 }
 
 .channel-thumbnail__default {

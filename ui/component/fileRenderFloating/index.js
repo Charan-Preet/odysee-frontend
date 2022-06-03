@@ -35,6 +35,7 @@ const select = (state, props) => {
   const { uri, collectionId } = playingUri || {};
 
   const claim = uri && selectClaimForUri(state, uri);
+  const channelThumbnail = (claim && claim.signing_channel.value.thumbnail.url) || '';
   const { claim_id: claimId, signing_channel: channelClaim } = claim || {};
   const { canonical_url: channelUrl } = channelClaim || {};
 
@@ -43,6 +44,7 @@ const select = (state, props) => {
     channelUrl,
     uri,
     playingUri,
+    channelThumbnail,
     primaryUri: selectPrimaryUri(state),
     title: selectTitleForUri(state, uri),
     isFloating: makeSelectIsPlayerFloating(location)(state),
