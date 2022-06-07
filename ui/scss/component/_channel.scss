@@ -213,6 +213,10 @@ $actions-z-index: 2;
   background-size: cover;
   margin-right: var(--spacing-m);
 
+  img {
+    image-rendering: crisp-edges;
+  }
+
   .button {
     display: flex;
     position: absolute;
