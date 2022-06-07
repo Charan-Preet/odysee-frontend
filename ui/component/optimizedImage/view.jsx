@@ -3,10 +3,15 @@ import React from 'react';
 import { getImageProxyUrl, getThumbnailCdnUrl } from 'util/thumbnail';
 
 function scaleToDevicePixelRatio(value: number) {
-  const devicePixelRatio = window.devicePixelRatio || 1.0;
-  const nextInteger = Math.ceil(value * devicePixelRatio);
-  // Round to next 100px for better caching
-  return Math.ceil(nextInteger / 100) * 100;
+  let scaled;
+  // Account for DPR:
+  scaled = value * (window.devicePixelRatio || 1.0);
+  // Experiment: 2x image for better down-scaling.
+  scaled *= 2;
+  // Round to next 64px for better caching.
+  scaled = (scaled + 0x20) & ~0x3f;
+  // Ensure it's an integer for the CDN param.
+  return Math.ceil(scaled);
 }
 
 function getOptimizedImgUrl(url, width, height, quality) {
