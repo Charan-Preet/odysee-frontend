@@ -151,6 +151,7 @@ export default function FileRenderFloating(props: Props) {
   const [doNavigate, setDoNavigate] = React.useState(false);
   const [shouldPlayNext, setPlayNext] = React.useState(true);
   const [countdownCanceled, setCountdownCanceled] = React.useState(false);
+  const [forceDisable, setForceDisable] = React.useState(false);
   const [position, setPosition] = usePersistedState('floating-file-viewer:position', {
     x: -25,
     y: window.innerHeight - 400,
@@ -417,7 +418,7 @@ export default function FileRenderFloating(props: Props) {
           defaultPosition={position}
           position={isFloating ? position : { x: 0, y: 0 }}
           bounds="parent"
-          disabled={noFloatingPlayer}
+          disabled={noFloatingPlayer || forceDisable}
           handle={!isMobile ? '.draggable' : ''}
           cancel=".button"
         >
@@ -512,6 +513,7 @@ export default function FileRenderFloating(props: Props) {
                       enableCardBody={() => setPlaylistBody(!playlistBodyOpen)}
                       customTitle={__('Now playing: --[Which Playlist is currently playing]--') + ' '}
                       playItemsOnClick
+                      disablePlayerDrag={setForceDisable}
                     />
                   )}
                 </div>

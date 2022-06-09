@@ -65,6 +65,7 @@ type Props = {
   showIndexes?: boolean,
   playItemsOnClick?: boolean,
   onHidden: (string) => void,
+  disablePlayerDrag?: (disable: boolean) => void,
 };
 
 export default function ClaimList(props: Props) {
@@ -110,6 +111,7 @@ export default function ClaimList(props: Props) {
     showIndexes,
     playItemsOnClick,
     onHidden,
+    disablePlayerDrag,
   } = props;
 
   const [currentSort, setCurrentSort] = usePersistedState(persistedStorageKey, SORT_NEW);
@@ -214,6 +216,7 @@ export default function ClaimList(props: Props) {
       smallThumbnail={smallThumbnail}
       showIndexes={showIndexes}
       playItemsOnClick={playItemsOnClick}
+      disablePlayerDrag={disablePlayerDrag}
     />
   );
 
@@ -331,9 +334,23 @@ export default function ClaimList(props: Props) {
                         transform = transform.replace(/\(.+,/, '(0,');
                       }
 
+                      // disablePlayerDrag is a function brought by fileRenderFloating if is floating
+                      const isDraggingOnFloatingPlayer = draggableSnapshot.isDragging && disablePlayerDrag;
+                      const playerInfo = isDraggingOnFloatingPlayer && document.querySelector('.content__info');
+                      const playerElem = isDraggingOnFloatingPlayer && document.querySelector('.content__viewer');
+                      const playerTransform = playerElem && playerElem.style.transform;
+                      const playerTop =
+                        playerTransform &&
+                        playerTransform.substring(playerTransform.indexOf(', ') + 2, playerTransform.indexOf('px)'));
+
                       const style = {
                         ...draggableProvided.draggableProps.style,
                         transform,
+                        top: isDraggingOnFloatingPlayer
+                          ? draggableProvided.draggableProps.style.top - playerInfo?.offsetTop - Number(playerTop)
+                          : draggableProvided.draggableProps.style.top,
+                        left: isDraggingOnFloatingPlayer ? undefined : draggableProvided.draggableProps.style.left,
+                        right: isDraggingOnFloatingPlayer ? undefined : draggableProvided.draggableProps.style.right,
                       };
 
                       return (
