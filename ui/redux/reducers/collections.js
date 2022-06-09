@@ -171,7 +171,7 @@ const collectionsReducer = handleActions(
         ...state,
         edited: editedCollections || state.edited,
         unpublished: unpublishedCollections || state.unpublished,
-        builtin: newBuiltin || state.unpublished,
+        builtin: newBuiltin || state.builtin,
       };
     },
     [ACTIONS.COLLECTION_ITEMS_RESOLVE_COMPLETED]: (state, action) => {

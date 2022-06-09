@@ -331,7 +331,7 @@ const ClaimPreview = forwardRef<any, {}>((props: Props, ref: any) => {
 
     if (playItemsOnClick) {
       doUriInitiatePlay(
-        { uri: claim.canonical_url, collectionId, source: collectionId === 'queue' ? collectionId : undefined },
+        { uri: claim.canonical_url || uri, collectionId, source: collectionId === 'queue' ? collectionId : undefined },
         true,
         true
       );
@@ -444,7 +444,11 @@ const ClaimPreview = forwardRef<any, {}>((props: Props, ref: any) => {
             'swipe-list__item': swipeLayout,
           })}
         >
-          {showIndexes && <span className="section__subtitle--small claim-preview__index">{indexInContainer + 1}</span>}
+          {showIndexes && (
+            <span className="card__subtitle card__subtitle--small-no-margin claim-preview__index">
+              {indexInContainer + 1}
+            </span>
+          )}
 
           {isMyCollection && showEdit && (
             <CollectionEditButtons
