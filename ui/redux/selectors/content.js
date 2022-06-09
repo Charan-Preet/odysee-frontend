@@ -29,6 +29,18 @@ export const selectListShuffle = (state: State) => selectState(state).shuffleLis
 export const selectLastViewedAnnouncement = (state: State) => selectState(state).lastViewedAnnouncement;
 export const selectRecsysEntries = (state: State) => selectState(state).recsysEntries;
 
+export const selectListIsShuffledForId = createSelector(
+  (state, id) => id,
+  selectListShuffle,
+  (id, shuffleList) => Boolean(shuffleList && shuffleList.collectionId === id)
+);
+
+export const selectListIsLoopedForId = createSelector(
+  (state, id) => id,
+  selectListLoop,
+  (id, loopList) => Boolean(loopList && loopList.collectionId === id && loopList.loop)
+);
+
 export const makeSelectIsPlaying = (uri: string) =>
   createSelector(selectPrimaryUri, (primaryUri) => primaryUri === uri);
 
@@ -45,14 +57,23 @@ export const makeSelectIsPlayerFloating = (location: UrlLocation) =>
     const { pathname, search } = location;
     const hasSecondarySource = Boolean(playingUri.source);
     const isComment = playingUri.source === 'comment';
+    const isQueue = playingUri.source === 'queue';
     const isInlineSecondaryPlayer =
       hasSecondarySource && playingUri.uri !== primaryUri && pathname === playingUri.pathname;
 
-    if (isComment && isInlineSecondaryPlayer && search && search !== '?view=discussion') return true;
+    if (
+      (isQueue && primaryUri !== playingUri.uri) ||
+      (isComment && isInlineSecondaryPlayer && search && search !== '?view=discussion')
+    ) {
+      return true;
+    }
 
     if (
+      (isQueue && primaryUri === playingUri.uri) ||
       isInlineSecondaryPlayer ||
-      (hasSecondarySource && !isComment ? playingUri.primaryUri === primaryUri : playingUri.uri === primaryUri)
+      (hasSecondarySource && !isComment && primaryUri
+        ? playingUri.primaryUri === primaryUri
+        : playingUri.uri === primaryUri)
     ) {
       return false;
     }

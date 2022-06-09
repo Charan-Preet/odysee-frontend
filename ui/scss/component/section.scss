@@ -125,6 +125,19 @@
   font-size: var(--font-body);
 }
 
+.center-self {
+  align-self: center;
+}
+
+.justify-space-between {
+  justify-content: space-between;
+}
+
+.align-center {
+  display: flex;
+  align-items: center;
+}
+
 .section__divider {
   display: flex;
   align-items: center;

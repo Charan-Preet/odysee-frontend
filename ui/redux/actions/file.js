@@ -6,7 +6,7 @@ import { shell } from 'electron';
 // @endif
 import Lbry from 'lbry';
 import { selectClaimForUri } from 'redux/selectors/claims';
-import { doAbandonClaim } from 'redux/actions/claims';
+import { doAbandonClaim, doResolveUri } from 'redux/actions/claims';
 import { batchActions } from 'util/batch-actions';
 
 import { doHideModal } from 'redux/actions/app';
@@ -116,9 +116,20 @@ export function doDeleteFileAndMaybeGoBack(
 }
 
 export function doFileGet(uri: string, saveFile: boolean = true, onSuccess?: (GetResponse) => any) {
-  return (dispatch: Dispatch, getState: () => any) => {
+  return async (dispatch: Dispatch, getState: () => any) => {
     const state = getState();
-    const claim = selectClaimForUri(state, uri);
+    let claim = selectClaimForUri(state, uri);
+    if (!claim) {
+      await dispatch(doResolveUri(uri, true))
+        .then((response) =>
+          Object.values(response).forEach((resolvedClaim) => {
+            if (resolvedClaim) {
+              claim = resolvedClaim;
+            }
+          })
+        )
+        .catch((e) => {});
+    }
     const isLivestreamClaim = isStreamPlaceholderClaim(claim);
     const { nout, txid } = claim;
     const outpoint = `${txid}:${nout}`;

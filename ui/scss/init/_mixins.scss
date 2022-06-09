@@ -206,6 +206,12 @@
   }
 }
 
+@mixin list-hover {
+  &:hover {
+    background-color: rgba(var(--color-primary-dynamic), 0.1);
+  }
+}
+
 @mixin handleClaimTileGifThumbnail($width) {
   .ff-canvas,
   .freezeframe-img {

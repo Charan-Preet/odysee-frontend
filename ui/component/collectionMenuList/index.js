@@ -1,5 +1,9 @@
 import { connect } from 'react-redux';
-import { makeSelectNameForCollectionId } from 'redux/selectors/collections';
+import {
+  selectNameForCollectionId,
+  selectIsCollectionBuiltInForId,
+  selectPublishedCollectionNotEditedForId,
+} from 'redux/selectors/collections';
 import { doOpenModal } from 'redux/actions/app';
 import { selectListShuffle } from 'redux/selectors/content';
 import { doToggleLoopList, doToggleShuffleList } from 'redux/actions/content';
@@ -12,8 +16,10 @@ const select = (state, props) => {
   const playNextUri = shuffle && shuffle[0];
 
   return {
-    collectionName: makeSelectNameForCollectionId(props.collectionId)(state),
+    collectionName: selectNameForCollectionId(state, props.collectionId),
     playNextUri,
+    isBuiltin: selectIsCollectionBuiltInForId(state, props.collectionId),
+    publishedNotEdited: selectPublishedCollectionNotEditedForId(state, props.collectionId),
   };
 };
 

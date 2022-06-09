@@ -420,7 +420,6 @@ type SharedData = {
     unpublishedCollections: CollectionGroup,
     editedCollections: CollectionGroup,
     builtinCollections: CollectionGroup,
-    savedCollections: Array<string>,
     lastViewedAnnouncement: string,
   },
 };
@@ -439,7 +438,6 @@ function extractUserState(rawObj: SharedData) {
       unpublishedCollections,
       editedCollections,
       builtinCollections,
-      savedCollections,
       lastViewedAnnouncement,
     } = rawObj.value;
 
@@ -455,7 +453,6 @@ function extractUserState(rawObj: SharedData) {
       ...(unpublishedCollections ? { unpublishedCollections } : {}),
       ...(editedCollections ? { editedCollections } : {}),
       ...(builtinCollections ? { builtinCollections } : {}),
-      ...(savedCollections ? { savedCollections } : {}),
       ...(lastViewedAnnouncement ? { lastViewedAnnouncement } : {}),
     };
   }
@@ -477,7 +474,6 @@ export function doPopulateSharedUserState(sharedSettings: any) {
       unpublishedCollections,
       editedCollections,
       builtinCollections,
-      savedCollections,
       lastViewedAnnouncement,
     } = extractUserState(sharedSettings);
     dispatch({
@@ -494,7 +490,6 @@ export function doPopulateSharedUserState(sharedSettings: any) {
         unpublishedCollections,
         editedCollections,
         builtinCollections,
-        savedCollections,
         lastViewedAnnouncement,
       },
     });
