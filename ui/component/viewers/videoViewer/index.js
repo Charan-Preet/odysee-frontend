@@ -2,10 +2,7 @@ import { connect } from 'react-redux';
 import { selectClaimForUri, selectThumbnailForUri } from 'redux/selectors/claims';
 import { isStreamPlaceholderClaim, getChannelIdFromClaim } from 'util/claim';
 import { selectActiveLivestreamForChannel } from 'redux/selectors/livestream';
-import {
-  makeSelectNextUrlForCollectionAndUrl,
-  makeSelectPreviousUrlForCollectionAndUrl,
-} from 'redux/selectors/collections';
+import { selectNextUrlForCollectionAndUrl, selectPreviousUrlForCollectionAndUrl } from 'redux/selectors/collections';
 import * as SETTINGS from 'constants/settings';
 import * as COLLECTIONS_CONSTS from 'constants/collections';
 import {
@@ -52,8 +49,8 @@ const select = (state, props) => {
   let nextRecommendedUri;
   let previousListUri;
   if (collectionId) {
-    nextRecommendedUri = makeSelectNextUrlForCollectionAndUrl(collectionId, uri)(state);
-    previousListUri = makeSelectPreviousUrlForCollectionAndUrl(collectionId, uri)(state);
+    nextRecommendedUri = selectNextUrlForCollectionAndUrl(state, uri, collectionId);
+    previousListUri = selectPreviousUrlForCollectionAndUrl(state, uri, collectionId);
   } else {
     const recommendedContent = selectRecommendedContentForUri(state, uri);
     nextRecommendedUri = recommendedContent && recommendedContent[0];

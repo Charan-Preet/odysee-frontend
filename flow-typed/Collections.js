@@ -14,14 +14,14 @@ declare type CollectionState = {
   pending: CollectionGroup,
   edited: CollectionGroup,
   builtin: CollectionGroup,
-  saved: Array<string>,
   isResolvingCollectionById: { [string]: boolean },
   error?: string | null,
+  queue: Collection,
 };
 
 declare type CollectionGroup = {
   [string]: Collection,
-}
+};
 
 declare type CollectionEditParams = {
   uris?: Array<string>,
@@ -30,4 +30,9 @@ declare type CollectionEditParams = {
   order?: { from: number, to: number },
   type?: string,
   name?: string,
-}
+};
+
+declare type CollectionFetchParams = {
+  collectionId: string,
+  pageSize?: number,
+};

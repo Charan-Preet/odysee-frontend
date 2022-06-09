@@ -12,7 +12,8 @@ import {
   makeSelectUriIsStreamable,
   selectDownloadingByOutpoint,
 } from 'redux/selectors/file_info';
-import { makeSelectUrlsForCollectionId } from 'redux/selectors/collections';
+import { selectUrlsForCollectionId } from 'redux/selectors/collections';
+import { selectUserVerifiedEmail } from 'redux/selectors/user';
 import { doToast } from 'redux/actions/notifications';
 import { doPurchaseUri } from 'redux/actions/file';
 import Lbry from 'lbry';
@@ -159,12 +160,14 @@ export function doUriInitiatePlay(playingOptions: PlayingUri, isPlayable?: boole
 
     const state = getState();
     const isLive = selectIsActiveLivestreamForUri(state, uri);
+    const isAuthenticated = selectUserVerifiedEmail(state);
+    const playCb = isAuthenticated ? (fileInfo) => dispatch(doAnaltyicsPurchaseEvent(fileInfo)) : undefined;
 
     if (!isFloating && !source) dispatch(doSetPrimaryUri(uri));
 
     if (isPlayable) dispatch(doSetPlayingUri(playingOptions));
 
-    if (!isLive) dispatch(doPlayUri(uri, false, true, (fileInfo) => dispatch(doAnaltyicsPurchaseEvent(fileInfo))));
+    if (!isLive) dispatch(doPlayUri(uri, false, true, playCb));
   };
 }
 
@@ -322,7 +325,7 @@ export const doRecommendationClicked = (claimId: string, index: number) => (disp
   }
 };
 
-export function doToggleLoopList(collectionId: string, loop: boolean, hideToast: boolean) {
+export function doToggleLoopList(collectionId: string, loop: boolean, hideToast?: boolean) {
   return (dispatch: Dispatch) => {
     dispatch({
       type: ACTIONS.TOGGLE_LOOP_LIST,
@@ -338,11 +341,11 @@ export function doToggleLoopList(collectionId: string, loop: boolean, hideToast:
   };
 }
 
-export function doToggleShuffleList(currentUri: string, collectionId: string, shuffle: boolean, hideToast: boolean) {
+export function doToggleShuffleList(currentUri: ?string, collectionId: string, shuffle: boolean, hideToast?: boolean) {
   return (dispatch: Dispatch, getState: () => any) => {
     if (shuffle) {
       const state = getState();
-      const urls = makeSelectUrlsForCollectionId(collectionId)(state);
+      const urls = selectUrlsForCollectionId(state, collectionId);
 
       let newUrls = urls
         .map((item) => ({ item, sort: Math.random() }))
@@ -358,14 +361,11 @@ export function doToggleShuffleList(currentUri: string, collectionId: string, sh
       }
 
       dispatch({
-        type: ACTIONS.TOGGLE_SHUFFLE_LIST,
+        type: ACTIONS.ENABLE_SHUFFLE_LIST,
         data: { collectionId, newUrls },
       });
     } else {
-      dispatch({
-        type: ACTIONS.TOGGLE_SHUFFLE_LIST,
-        data: { collectionId, newUrls: false },
-      });
+      dispatch({ type: ACTIONS.DISABLE_SHUFFLE_LIST });
     }
     if (!hideToast) {
       dispatch(
