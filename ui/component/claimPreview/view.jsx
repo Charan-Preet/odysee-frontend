@@ -102,6 +102,7 @@ type Props = {
   smallThumbnail?: boolean,
   showIndexes?: boolean,
   playItemsOnClick?: boolean,
+  disableClickNavigation?: boolean,
   doClearContentHistoryUri: (uri: string) => void,
   doUriInitiatePlay: (playingOptions: PlayingUri, isPlayable?: boolean, isFloating?: boolean) => void,
   disablePlayerDrag?: (disable: boolean) => void,
@@ -175,6 +176,7 @@ const ClaimPreview = forwardRef<any, {}>((props: Props, ref: any) => {
     smallThumbnail,
     showIndexes,
     playItemsOnClick,
+    disableClickNavigation,
     doClearContentHistoryUri,
     doUriInitiatePlay,
     disablePlayerDrag,
@@ -254,22 +256,24 @@ const ClaimPreview = forwardRef<any, {}>((props: Props, ref: any) => {
   }
 
   const handleNavLinkClick = (e) => {
-    if (playItemsOnClick) {
-      e.preventDefault();
-      e.stopPropagation();
-      doUriInitiatePlay({ uri, collectionId, source: collectionId === 'queue' ? collectionId : undefined }, true, true);
-    } else {
-      if (onClick) {
-        onClick(e, claim, indexInContainer); // not sure indexInContainer is used for anything.
-      }
-      e.stopPropagation();
+    if (playItemsOnClick && claim) {
+      doUriInitiatePlay(
+        { uri: claim.canonical_url || uri, collectionId, source: collectionId === 'queue' ? collectionId : undefined },
+        true,
+        true
+      );
     }
+    if (onClick) {
+      onClick(e, claim, indexInContainer); // not sure indexInContainer is used for anything.
+    }
+    e.stopPropagation();
   };
 
   const navLinkProps = {
     to: {
-      pathname: playItemsOnClick ? undefined : navigateUrl,
-      search: playItemsOnClick ? undefined : navigateSearch.toString() ? '?' + navigateSearch.toString() : '',
+      pathname: disableClickNavigation ? undefined : navigateUrl,
+      search: disableClickNavigation ? undefined : navigateSearch.toString() ? '?' + navigateSearch.toString() : '',
+      state: { hideFloatingPlayer: playItemsOnClick && !disableClickNavigation ? true : undefined },
     },
     onClick: handleNavLinkClick,
     onAuxClick: handleNavLinkClick,
@@ -317,11 +321,20 @@ const ClaimPreview = forwardRef<any, {}>((props: Props, ref: any) => {
       onClick(e, claim, indexInContainer);
     }
 
-    if (claim && !pending && !disableNavigation) {
+    if (claim && !pending && !disableNavigation && !disableClickNavigation) {
       history.push({
         pathname: navigateUrl,
         search: navigateSearch.toString() ? '?' + navigateSearch.toString() : '',
+        state: { hideFloatingPlayer: playItemsOnClick && !disableClickNavigation ? true : undefined },
       });
+    }
+
+    if (playItemsOnClick) {
+      doUriInitiatePlay(
+        { uri: claim.canonical_url, collectionId, source: collectionId === 'queue' ? collectionId : undefined },
+        true,
+        true
+      );
     }
   }
 

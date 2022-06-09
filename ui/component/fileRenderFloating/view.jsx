@@ -512,7 +512,7 @@ export default function FileRenderFloating(props: Props) {
                       bodyOpen={playlistBodyOpen}
                       enableCardBody={() => setPlaylistBody(!playlistBodyOpen)}
                       customTitle={__('Now playing: --[Which Playlist is currently playing]--') + ' '}
-                      playItemsOnClick
+                      disableClickNavigation
                       disablePlayerDrag={setForceDisable}
                     />
                   )}
