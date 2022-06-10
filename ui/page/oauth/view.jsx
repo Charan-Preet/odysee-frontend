@@ -3,9 +3,9 @@ import React from 'react';
 import Page from 'component/page';
 import UserOAuth from 'component/userOAuth';
 
-export default function SignInPage() {
+export default function OAuthPage() {
   return (
-    <Page authPage noFooter>
+    <Page authPage>
       <UserOAuth />
     </Page>
   );

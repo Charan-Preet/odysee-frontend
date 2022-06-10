@@ -16,7 +16,10 @@ import React from 'react';
 import Skeleton from '@mui/material/Skeleton';
 import SkipNavigationButton from 'component/skipNavigationButton';
 import Tooltip from 'component/common/tooltip';
+import UserOAuthButton from 'component/userOAuthButton';
 import WunderBar from 'component/wunderbar';
+import { getTokens } from 'util/saved-passwords';
+import { useKeycloak } from '@react-keycloak/web';
 
 type Props = {
   authenticated: boolean,
@@ -83,10 +86,10 @@ const Header = (props: Props) => {
   } = history;
 
   const isMobile = useIsMobile();
+  const { keycloak } = useKeycloak();
 
   // on the verify page don't let anyone escape other than by closing the tab to keep session data consistent
   const isVerifyPage = pathname.includes(PAGES.AUTH_VERIFY);
-  const isSignUpPage = pathname.includes(PAGES.AUTH);
   const isSignInPage = pathname.includes(PAGES.AUTH_SIGNIN);
   const isPwdResetPage = pathname.includes(PAGES.AUTH_PASSWORD_RESET);
   const iYTSyncPage = pathname.includes(PAGES.YOUTUBE_SYNC);
@@ -169,7 +172,7 @@ const Header = (props: Props) => {
         </>
       ) : !isMobile ? (
         <div className="header__authButtons">
-          <Button navigate={`/$/${PAGES.AUTH_SIGNIN}`} button="link" label={__('Log In')} disabled={user === null} />
+          <UserOAuthButton />
           <Button navigate={`/$/${PAGES.AUTH}`} button="primary" label={__('Sign Up')} disabled={user === null} />
         </div>
       ) : (
@@ -177,6 +180,10 @@ const Header = (props: Props) => {
       )}
     </div>
   );
+
+  const tokens = getTokens();
+  const authToken = tokens.auth_token ? tokens.auth_token.slice(0, 10) : tokens.auth_token;
+  const accessToken = tokens.access_token ? tokens.access_token.slice(0, 10) : tokens.access_token;
 
   return (
     <header className={classnames('header', { 'header--minimal': authHeader })}>
@@ -221,6 +228,19 @@ const Header = (props: Props) => {
                 {...homeButtonNavigationProps}
               >
                 <Logo />
+              </Button>
+
+              <Button
+                className="header__navigationItem--logo"
+                onClick={() => {
+                  console.log(keycloak);
+                }}
+              >
+                <pre style={{ textAlign: 'left', fontSize: '14px' }}>
+                  {`auth:   ${authToken ? 'yes' : authToken}`}
+                  <br />
+                  {`access: ${accessToken ? 'yes' : accessToken}`}
+                </pre>
               </Button>
 
               {/* @if process.env.DEV_CHANGELOG */}
@@ -269,7 +289,7 @@ const Header = (props: Props) => {
 
                         if (syncError) signOut();
 
-                        if ((isSignInPage && !emailToVerify) || isSignUpPage || isPwdResetPage || iYTSyncPage) {
+                        if ((isSignInPage && !emailToVerify) || isPwdResetPage || iYTSyncPage) {
                           goBack();
                         } else {
                           push('/');

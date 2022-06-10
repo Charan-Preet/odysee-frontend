@@ -1,4 +1,3 @@
-import * as ACTIONS from 'constants/action_types';
 import Lbry from 'lbry';
 import querystring from 'querystring';
 import analytics from 'analytics';
@@ -13,6 +12,8 @@ const Lbryio = {
 
 const EXCHANGE_RATE_TIMEOUT = 20 * 60 * 1000;
 const INTERNAL_APIS_DOWN = 'internal_apis_down';
+
+Lbryio.fetchingUser = false;
 
 // We can't use env's because they aren't passed into node_modules
 Lbryio.setLocalApi = (endpoint) => {
@@ -55,8 +56,36 @@ Lbryio.call = (resource, action, params = {}, method = 'get') => {
     return fetch(url, options).then(checkAndParse);
   }
 
-  return Lbryio.getAuthToken().then((token) => {
-    const fullParams = { auth_token: token, ...params };
+  return Lbryio.getTokens().then((tokens) => {
+    // Start off with 'auth_token' set by default, then allowing it to be
+    // overwritten by 'params' (usually to `auth_token=''`). This covers the
+    // legacy session support, and also maintaining the ability to skip auth
+    // by passing `params.auth_token = ''`.
+    const fullParams = {
+      ...(tokens.auth_token ? { auth_token: tokens.auth_token } : {}),
+      ...params,
+    };
+
+    const headers = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    };
+
+    if (action === 'me') {
+      // Pass both auth_token and Bearer to merge.
+      if (tokens && tokens.access_token) {
+        headers.Authorization = `Bearer ${tokens.access_token}`;
+      }
+    } else if (tokens && tokens.access_token) {
+      // To reduce code churn, we just translate that intention to oauth here
+      // instead of trying to renaming `params.auth_token` everywhere.
+      const skipAuth = fullParams.auth_token === '';
+      if (!skipAuth) {
+        headers.Authorization = `Bearer ${tokens.access_token}`;
+      }
+
+      delete fullParams.auth_token;
+    }
+
     Object.keys(fullParams).forEach((key) => {
       const value = fullParams[key];
       if (typeof value === 'object') {
@@ -69,14 +98,13 @@ Lbryio.call = (resource, action, params = {}, method = 'get') => {
 
     let options = {
       method: 'GET',
+      headers,
     };
 
     if (method === 'post') {
       options = {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+        headers,
         body: qs,
       };
       url = `${Lbryio.CONNECTION_STRING}${resource}/${action}`;
@@ -89,125 +117,72 @@ Lbryio.call = (resource, action, params = {}, method = 'get') => {
   });
 };
 
-Lbryio.authToken = null;
-
 Lbryio.getAuthToken = () =>
   new Promise((resolve) => {
-    if (Lbryio.authToken) {
-      resolve(Lbryio.authToken);
-    } else if (Lbryio.overrides.getAuthToken) {
-      Lbryio.overrides.getAuthToken().then((token) => {
-        resolve(token);
-      });
-    } else if (typeof window !== 'undefined') {
-      const { store } = window;
-      if (store) {
-        const state = store.getState();
-        const token = state.auth ? state.auth.authToken : null;
-        Lbryio.authToken = token;
-        resolve(token);
-      }
-
-      resolve(null);
-    } else {
-      resolve(null);
-    }
+    Lbryio.overrides.getAuthToken().then((token) => {
+      resolve(token);
+    });
   });
 
-Lbryio.getCurrentUser = () => Lbryio.call('user', 'me');
-
-Lbryio.authenticate = (domain, language) => {
-  if (!Lbryio.enabled) {
-    const params = {
-      id: 1,
-      primary_email: 'disabled@lbry.io',
-      has_verified_email: true,
-      is_identity_verified: true,
-      is_reward_approved: false,
-      language: language || 'en',
-    };
-
-    return new Promise((resolve) => {
-      resolve(params);
+Lbryio.getTokens = () =>
+  new Promise((resolve) => {
+    Lbryio.overrides.getTokens().then((tokens) => {
+      resolve(tokens);
     });
-  }
+  });
 
-  if (Lbryio.authenticationPromise === null) {
-    Lbryio.authenticationPromise = new Promise((resolve, reject) => {
-      Lbryio.getAuthToken()
-        .then((token) => {
-          if (!token || token.length > 60) {
-            return false;
-          }
-
-          // check that token works
-          return Lbryio.getCurrentUser()
-            .then((user) => user)
-            .catch((error) => {
-              if (error === INTERNAL_APIS_DOWN) {
-                throw new Error('Internal APIS down');
-              }
-
-              return false;
-            });
-        })
-        .then((user) => {
-          if (user) {
-            return user;
-          }
-
-          return Lbry.status()
-            .then(
-              (status) =>
-                new Promise((res, rej) => {
-                  const appId =
-                    domain && domain !== 'lbry.tv'
-                      ? (domain.replace(/[.]/gi, '') + status.installation_id).slice(0, 66)
-                      : status.installation_id;
-                  Lbryio.call(
-                    'user',
-                    'new',
-                    {
-                      auth_token: '',
-                      language: language || 'en',
-                      app_id: appId,
-                    },
-                    'post'
-                  )
-                    .then((response) => {
-                      if (!response.auth_token) {
-                        throw new Error('auth_token was not set in the response');
-                      }
-
-                      const { store } = window;
-                      if (Lbryio.overrides.setAuthToken) {
-                        Lbryio.overrides.setAuthToken(response.auth_token);
-                      }
-
-                      if (store) {
-                        store.dispatch({
-                          type: ACTIONS.GENERATE_AUTH_TOKEN_SUCCESS,
-                          data: { authToken: response.auth_token },
-                        });
-                      }
-                      Lbryio.authToken = response.auth_token;
-                      return res(response);
-                    })
-                    .catch((error) => rej(error));
-                })
-            )
-            .then((newUser) => {
-              if (!newUser) {
-                return Lbryio.getCurrentUser();
-              }
-              return newUser;
-            });
-        })
-        .then(resolve, reject);
+Lbryio.deleteAuthToken = () =>
+  new Promise((resolve) => {
+    Lbryio.overrides.deleteAuthToken().then(() => {
+      resolve(true);
     });
-  }
+  });
 
-  return Lbryio.authenticationPromise;
+Lbryio.fetchCurrentUser = () => Lbryio.call('user', 'me');
+
+Lbryio.fetchNewUser = async (domain, language) => {
+  try {
+    const status = await Lbry.status();
+    const appId =
+      domain && domain !== 'lbry.tv'
+        ? (domain.replace(/[.]/gi, '') + status.installation_id).slice(0, 66)
+        : status.installation_id;
+    const userResponse = await Lbryio.call(
+      'user',
+      'new',
+      {
+        auth_token: '',
+        language: language || 'en',
+        app_id: appId,
+      },
+      'post'
+    );
+    if (!userResponse.auth_token) {
+      throw new Error('auth_token was not set in the response');
+    } else {
+      await Lbryio.overrides.setAuthToken(userResponse.auth_token);
+    }
+    return userResponse;
+  } catch (e) {
+    return { error: { message: e.message } };
+  }
+};
+
+Lbryio.fetchUser = async (domain, language) => {
+  if (!Lbryio.fetchingUser) {
+    let user;
+    Lbryio.fetchingUser = true;
+    const tokens = await Lbryio.getTokens(domain, language);
+    if (!tokens.auth_token && !tokens.access_token) {
+      user = await Lbryio.fetchNewUser(domain, language);
+    } else {
+      user = await Lbryio.fetchCurrentUser();
+      if (tokens.access_token && tokens.auth_token) {
+        await Lbryio.deleteAuthToken();
+      }
+    }
+    return user;
+  }
 };
 
 Lbryio.getStripeToken = () =>

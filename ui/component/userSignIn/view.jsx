@@ -1,3 +1,7 @@
+/**
+ * Pre-oauth method of signing in.
+ */
+
 // @flow
 import React from 'react';
 import { withRouter } from 'react-router';
@@ -7,10 +11,10 @@ import Spinner from 'component/spinner';
 
 type Props = {
   user: ?User,
-  history: { push: string => void, replace: string => void },
+  history: { push: (string) => void, replace: (string) => void },
   location: { search: string },
   userFetchPending: boolean,
-  doUserSignIn: string => void,
+  doUserSignIn: (string) => void,
   emailToVerify: ?string,
   passwordExists: boolean,
 };

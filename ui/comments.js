@@ -1,11 +1,13 @@
 // @flow
 import { COMMENT_SERVER_API } from 'config';
+import { getTokens } from 'util/saved-passwords';
 
 // prettier-ignore
 const Comments = {
   url: COMMENT_SERVER_API,
   enabled: Boolean(COMMENT_SERVER_API),
 
+  channel_status: (params: ChannelStatusParams) => fetchCommentsApi('channel.Status', params),
   moderation_block: (params: ModerationBlockParams) => fetchCommentsApi('moderation.Block', params),
   moderation_unblock: (params: ModerationBlockParams) => fetchCommentsApi('moderation.UnBlock', params),
   moderation_block_list: (params: BlockedListArgs) => fetchCommentsApi('moderation.BlockedList', params),
@@ -35,11 +37,14 @@ function fetchCommentsApi(method: string, params: {}) {
     return Promise.reject('Comments are not currently enabled.'); // eslint-disable-line
   }
 
+  // $FlowFixMe: null Comments.url already handled above.
   const url = `${Comments.url}?m=${method}`;
+  const tokens = getTokens();
   const options = {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...(tokens.access_token ? { Authorization: `Bearer ${tokens.access_token}` } : {}),
     },
     body: JSON.stringify({
       jsonrpc: '2.0',

@@ -42,12 +42,20 @@ reducers[ACTIONS.AUTHENTICATION_STARTED] = (state) =>
     userIsPending: true,
   });
 
-reducers[ACTIONS.AUTHENTICATION_SUCCESS] = (state, action) =>
-  Object.assign({}, state, {
+reducers[ACTIONS.AUTHENTICATION_SUCCESS] = (state, action) => {
+  const newUserState = Object.assign({}, state, {
     authenticationIsPending: false,
     userIsPending: false,
-    user: action.data.user,
   });
+
+  if (action.data) {
+    if (action.data.user) {
+      newUserState.user = action.data.user;
+    }
+  }
+
+  return newUserState;
+};
 
 reducers[ACTIONS.AUTHENTICATION_FAILURE] = (state) =>
   Object.assign({}, state, {

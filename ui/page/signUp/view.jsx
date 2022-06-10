@@ -1,12 +1,27 @@
 // @flow
 import React from 'react';
-import UserSignUp from 'component/userSignUp';
+import { useKeycloak } from '@react-keycloak/web';
 import Page from 'component/page';
+import Spinner from 'component/spinner';
+import UserSignUp from 'component/userSignUp';
 
 export default function SignUpPage() {
+  const { keycloak, initialized } = useKeycloak();
+
+  React.useEffect(() => {
+    if (initialized && !keycloak.authenticated) {
+      keycloak.register();
+    }
+  }, [initialized, keycloak]);
+
   return (
     <Page authPage noFooter>
-      <UserSignUp />
+      {!initialized && (
+        <div className="main--empty">
+          <Spinner delayed />
+        </div>
+      )}
+      {keycloak.authenticated && <UserSignUp />}
     </Page>
   );
 }
